@@ -11,7 +11,7 @@ This project conducts a comprehensive exploration of an e-commerce dataset, with
 ### Tools and Technologies used
 Rstudio, Excel, R
 
-## R libraries utitlized
+### R libraries utitlized
 GGPLOT2, STRINGR, DPLYR, CORRPLOT
 
 ### Data Cleaning and Preparation
