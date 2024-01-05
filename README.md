@@ -8,6 +8,12 @@ I've utilized the dataset sourced from Kaggle: [Dataset](https://www.kaggle.com/
 
 This project conducts a comprehensive exploration of an e-commerce dataset, with a specific focus on the "Computers & Accessories" category. The project encompasses multiple phases, including data cleaning, preparation, analysis, and visualization.
 
+### Tools and Technologies used
+Rstudio, Excel, R
+
+## R libraries utitlized
+GGPLOT2, STRINGR, DPLYR, CORRPLOT
+
 ### Data Cleaning and Preparation
 The initial phase of the project involves addressing inconsistencies, handling missing data, and standardizing the dataset. Particular attention is given to aspects like product pricing and customer ratings. This meticulous data preparation lays a strong foundation for accurate analysis. 
 <br>
