@@ -1,0 +1,500 @@
+---
+title: "Sales_Data_EDA"
+author: "Harshitha Chandrashekar"
+date: "2024-01-03"
+output: html_document
+---
+
+# Data preprocessing and Exploratory Data Analysis of Amazon products
+
+## Abstract 
+
+In this project, a detailed exploration is conducted of an e-commerce dataset focused on the "Computers & Accessories" category. The project encompasses data cleaning, preparation, analysis, and visualization. 
+
+**Data Cleaning and Preparation:** We begin by rectifying inconsistencies, handling missing values, and standardizing the dataset, particularly focusing on product pricing and customer ratings. This ensures a solid foundation for accurate analysis.
+
+**Data Analysis:** The analysis phase delves into understanding pricing strategies, customer satisfaction, and product categorization. We explore the relationships between pricing, discounts, and customer ratings to uncover patterns that inform business strategy.
+
+**Data Visualization:** Various visual tools like histograms, bar plots, and scatter plots are employed to illustrate key data trends and insights, making the analysis comprehensible and engaging.
+
+The project aims to extract actionable insights from the dataset, demonstrating the value of a data-driven approach in understanding and optimizing e-commerce strategies, especially in product pricing and customer engagement.
+
+## Data Overview
+
+This dataset comprises a selection of products from specific categories on Amazon India, available at <https://www.amazon.in/>. It encompasses details about the products, including their prices, discounts, and customer ratings.
+
+**Columns in the Dataset**
+This dataset consists of 16 columns, but I will primarily concentrate on the specific columns listed below for my analysis.
+
+**Product_Id:** A unique identifier for each product. This can be useful for tracking and referring to specific products.<br>
+**product_name:** The name or title of the product.<br> 
+**category:** Provides a hierarchical categorization of each product.<br>
+**discounted_price:** The price of the product after applying the discount.<br>
+**actual_price:** The original price of the product before any discounts.<br> 
+**discount_percentage:** The percentage of discount applied to the product.<br> 
+**rating:** The average customer rating for the product. This is crucial for understanding customer satisfaction and product quality.<br>
+**rating_count:** The number of ratings a product has received. This can indicate the popularity or customer engagement with the product.<br>
+**user_id:** list of unique identifiers for users who have reviewed the product.<br> 
+**user_name:** Names of users who have reviewed the product.<br> 
+**img_link:** A link to an image of the product.<br>
+
+
+## Data Cleaning and Preprocessing
+
+```{r}
+#Read the data in the file
+data1 <- read.csv('./Amazon_kaggle.csv')
+
+#Displays the first few rows
+head(data1, 3)
+
+#Displays the column names
+colnames(data1)
+
+#Displays rows and columns
+dimensions <- dim(data1)
+dimensions
+
+#Checking Data Types for each Column
+sapply(data1, class)
+```
+
+**All the columns are in the 'character' data type. Therefore, we need to convert the numerical columns to their appropriate data types and format them accordingly.**
+
+
+```{r}
+# Replacing "," with nothing in the "Actual Price" and "Discounted Price" columns
+data1$actual_price <- gsub(",", "", data1$actual_price)
+data1$discounted_price <- gsub(",", "", data1$discounted_price)
+
+#Lets convert the data type of "Discounted Price" and "Actual Price" from "chr" to "num"
+data1$discounted_price <- as.numeric(sub("₹", "", data1$discounted_price))
+data1$actual_price <- as.numeric(sub("₹", "", data1$actual_price))
+
+#Lets convert the datatype of "Discount Percentage" to "num"
+
+# Replaces '%' and convert to numeric
+data1$discount_percentage <- as.numeric(gsub('%', '', data1$discount_percentage))
+sapply(data1, class)
+
+# Divide by 100
+data1$discount_percentage <- data1$discount_percentage / 100
+
+# Display the 'discount_percentage' column
+head(data1$discount_percentage)
+
+```
+
+**Lets inspect the *rating* column**
+
+```{r}
+#Finds the count of all the different ratings in the "Rating" column
+rating_counts <- table(data1$rating)
+print(rating_counts)
+
+
+#Inspecting the strange row in the rating column having "|" as a rating
+Strange_row <- data1[data1$rating == "|", ]
+Strange_row
+```
+
+**After conducting a search for the product on the Amazon website, I discovered that the rating is 3.9. As a result, I intend to make a replacement.**
+
+```{r}
+# Replacing "|" with "3.9" and converting it to numeric
+data1$rating <- as.numeric(gsub("\\|", "3.9", data1$rating))
+
+```
+
+
+**Let's remove the "," and convert the data type of *rating_count* column**
+
+```{r}
+data1$rating_count <- as.numeric(sub(",", "", data1$rating_count))
+
+```
+
+
+**Check for *missing values* **
+
+```{r}
+missing_values <- colSums(is.na(data1))
+missing_values
+```
+
+**We can see that there are no missing values. Now I want to create a new dataframe *df1* that contains only the vital columns required for my analysis.**
+
+```{r}
+# Created a new data frame 'df1' with selected columns
+df1 <- subset(data1, select = c(product_id, product_name, category, discounted_price, actual_price, discount_percentage, rating, rating_count))
+
+# Splitting the strings in the category column
+category_split <- strsplit(data1$category, "|", fixed = TRUE)
+category_split_df <- as.data.frame(do.call(rbind, category_split))
+
+# Renaming the "Category Column" with only the required hirarchial category columns
+colnames(category_split_df) <- c('Category_1', 'Category_2', 'Category_3')
+head(category_split_df)
+
+# Adding the categories to the new dataframe
+df1$Category_1 <- category_split_df$Category_1
+df1$Category_2 <- category_split_df$Category_2
+df1$Category_3 <- category_split_df$Category_3
+
+# Removing the 'category' column from 'df1'
+df1$category <- NULL
+
+#Display the new dataframe
+head(df1)
+```
+
+**Now, lets fix the strings in all the *category* columns**
+
+```{r}
+# Checking the unique values in "Category 1"
+category_1_counts <- table(df1$Category_1)
+category_1_counts
+
+
+# install.packages("stringr")
+library(stringr)
+
+
+# Fixing Strings in the Category_1 Column
+df1$Category_1 <- str_replace_all(df1$Category_1, c('&' = ' & ', 
+                                                    'OfficeProducts' = 'Office Products', 
+                                                    'MusicalInstruments' = 'Musical Instruments', 
+                                                    'HomeImprovement' = 'Home Improvement'))
+
+
+# Checking the unique values in "Category 2"
+category_2_counts <- table(df1$Category_2)
+category_2_counts
+
+#Fixing Strings in Category_2 column
+df1$Category_2 <- gsub('&', ' & ', df1$Category_2)
+df1$Category_2 <- gsub(',', ', ', df1$Category_2)
+df1$Category_2 <- gsub('HomeAppliances', 'Home Appliances', df1$Category_2)
+df1$Category_2 <- gsub('AirQuality', 'Air Quality', df1$Category_2)
+df1$Category_2 <- gsub('WearableTechnology', 'Wearable Technology', df1$Category_2)
+df1$Category_2 <- gsub('NetworkingDevices', 'Networking Devices', df1$Category_2)
+df1$Category_2 <- gsub('OfficePaperProducts', 'Office Paper Products', df1$Category_2)
+df1$Category_2 <- gsub('ExternalDevices', 'External Devices', df1$Category_2)
+df1$Category_2 <- gsub('DataStorage', 'Data Storage', df1$Category_2)
+df1$Category_2 <- gsub('HomeStorage', 'Home Storage', df1$Category_2)
+df1$Category_2 <- gsub('HomeAudio', 'Home Audio', df1$Category_2)
+df1$Category_2 <- gsub('GeneralPurposeBatteries', 'General Purpose Batteries', df1$Category_2)
+df1$Category_2 <- gsub('BatteryChargers', 'Battery Chargers', df1$Category_2)
+df1$Category_2 <- gsub('CraftMaterials', 'Craft Materials', df1$Category_2)
+df1$Category_2 <- gsub('OfficeElectronics', 'Office Electronics', df1$Category_2)
+df1$Category_2 <- gsub('PowerAccessories', 'Power Accessories', df1$Category_2)
+df1$Category_2 <- gsub('CarAccessories', 'Car Accessories', df1$Category_2)
+df1$Category_2 <- gsub('HomeMedicalSupplies', 'Home Medical Supplies', df1$Category_2)
+df1$Category_2 <- gsub('HomeTheater', 'Home Theater', df1$Category_2)
+
+
+# Checking the unique values in "Category 3"
+category_3_counts <- table(df1$Category_3)
+
+#Fixing Strings in Category_3 column
+df1$Category_3 <- gsub('&', ' & ', df1$Category_3)
+df1$Category_3 <- gsub(',', ', ', df1$Category_3)
+df1$Category_3 <- gsub("([a-z])([A-Z])", "\\1 \\2", df1$Category_3)
+df1$Category_3 <- gsub('PCGaming Peripherals', 'PC Gaming Peripherals', df1$Category_3)
+df1$Category_3 <- gsub('USBHubs', 'USB Hubs', df1$Category_3)
+df1$Category_3 <- gsub('USBGadgets', 'USB Gadgets', df1$Category_3)
+
+head(df1)
+```
+
+**Lets remove whitespaces from *Product_id* column**
+
+```{r}
+df1$product_id <- trimws(df1$product_id)
+head(df1)
+```
+
+**In the rating column, we could further segregate the ratings based on different categories. Lets create a new column called *Rating_Score* and display the categories for ratings. **
+
+```{r}
+# Adding Categories to the "Rating" Column
+df1$Rating_Score <- ifelse(df1$rating < 2.0, 'Poor',
+                           ifelse(df1$rating < 3.0, 'Below Average',
+                                  ifelse(df1$rating < 4.0, 'Average',
+                                         ifelse(df1$rating < 5.0, 'Above Average',
+                                                ifelse(df1$rating == 5.0, 'Excellent', NA)))))
+
+head(df1)
+
+# Checking the data type of "Rating Score" column
+column_type <- class(df1$Rating_Score)
+column_type
+```
+
+**I want to create a new column that tells us the difference in price between actual and discounted prices. Lets call it *Price_Difference* **
+
+```{r}
+df1$Price_difference <- df1$actual_price - df1$discounted_price
+
+```
+
+**Finalizing the *df1* dataframe**
+
+```{r}
+# Reorder columns by specifying the desired order
+df1 <- df1[, c("product_id", "Category_1", "Category_2", "Category_3", "product_name", "discounted_price", "actual_price", "Price_difference", "discount_percentage", "rating", "Rating_Score", "rating_count")]
+
+
+# Renaming all the columns
+colnames(df1) <- c("Product_Id", "Category_1", "Category_2", "Category_3", "Product_Name", 
+                   "Discounted_Price", "Actual_Price", "Price_difference", "Discount_Percentage", "Rating", 
+                   "Rating_Score", "Rating_Count")
+
+
+# Display the re-ordered columns
+head(df1)
+```
+
+**Category_1, Category_2, Category_3, Price_Difference, Rating_Score** are the new variables creating using existing columns.
+
+
+
+
+## Data Analysis and Visualization
+
+### Products Distribution: 
+
+**1. Box Plot representing the product distribution across 'Category 1'**
+
+```{r pressure, echo=FALSE}
+# Load necessary libraries
+
+library(dplyr)
+library(ggplot2)
+library(patchwork) 
+```
+
+
+```{r fig.width=10, fig.height=6}
+# Get top 5 main categories
+most_main_items <- df1 %>%
+  count(Category_1) %>%
+  top_n(5, n) %>%
+  arrange(desc(n))
+
+# Get top 10 sub categories
+most_sub_items <- df1 %>%
+  count(Category_2) %>%
+  top_n(10, n) %>%
+  arrange(desc(n))
+
+# Color palette
+color_palette <- c("orange", "pink", "yellow", "skyblue", "brown", "green")
+
+# Plotting
+p1 <- ggplot(most_main_items, aes(x = reorder(Category_1, n), y = n, fill = Category_1)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values = color_palette) +
+  labs(title = "Most Products by Main Category", x = "Count", y = "Product Main Category")
+
+p1
+```
+
+**2. Box Plot representing the product distribution across Category 2**
+
+```{r fig.width=10, fig.height=6}
+# Get top 5 main categories
+most_main_items <- df1 %>%
+  count(Category_1) %>%
+  top_n(5, n) %>%
+  arrange(desc(n))
+
+# Get top 10 sub categories
+most_sub_items <- df1 %>%
+  count(Category_2) %>%
+  top_n(10, n) %>%
+  arrange(desc(n))
+
+# Color palette
+color_palette <- c("blue", "green", "red", "purple", "orange", "pink", "yellow", "skyblue", "brown", "grey")
+
+# Plotting
+p2 <- ggplot(most_sub_items, aes(x = reorder(Category_2, n), y = n, fill = Category_2)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values = color_palette) +
+  labs(title = "Most Products by Sub-Category", x = "Count", y = "Product Sub-Category")
+
+p2
+```
+
+It is evident that the "Electronics" category contains the highest number of products, including Accessories & Peripherals and Kitchen & Home Appliances subcategories.
+
+
+
+### Ratings Analysis
+
+**1. Distribution of Rattings**
+```{r fig.width=7, fig.height=5}
+ggplot(df1, aes(x=Rating)) + 
+  geom_histogram(aes(y=..density..), # Histogram with density on y-axis
+                 binwidth=0.3, # Adjust binwidth as needed
+                 fill="yellow", 
+                 color="black") + 
+  geom_density(col="blue", lwd=2) + # Density plot
+  theme_minimal() + 
+  labs(title="Histogram with Density Plot of Ratings", x="Ratings", y="Density")
+
+```
+
+The histogram shows the distribution of product ratings. The ratings are fairly normally distributed, with a slight skew towards higher ratings. This indicates that a majority of products have ratings in the higher range.
+
+
+**2. Popular Products based on Rating Count**
+
+Let's analyze the popularity of products based on the number of ratings received. We'll identify and visualize the top products in terms of rating count, which can provide insights into the most engaged-with products by customers.
+
+```{r fig.width=7, fig.height=5}
+# Sorting the dataframe by Rating_Count
+df_sorted_by_rating_count <- df1 %>%
+  arrange(desc(Rating_Count))
+
+# Selecting the top products
+top_10_products <- head(df_sorted_by_rating_count, 10)
+
+# Define your custom labels here
+custom_labels <- c("Prod A", "Prod B", "Prod C", "Prod D", "Prod E", "Prod F", "Prod G", "Prod H", "Prod I", "Prod J")
+
+# Plotting the top 10 products based on Rating Count with custom labels
+ggplot(top_10_products, aes(x = reorder(Product_Name, Rating_Count), y = Rating_Count)) +
+  geom_bar(stat = "identity", fill = "pink") +
+  coord_flip() +  # Flip the coordinates to match the seaborn plot
+  scale_x_discrete(labels = custom_labels) +  
+  labs(title = 'Top 10 Products by Rating Count',
+       x = 'Product Name',
+       y = 'Rating Count') +
+  theme_minimal() +
+  ylim(c(0, 100000))
+```
+
+where,
+Prod A = boAt Deuce USB 300 2 in 1 Type-C & Micro USB Stress Resistant, Sturdy Cable with 3A Fast Charging & 480mbps Data Transmission, 10000+ Bends Lifespan and Extended 1.5m Length(Mercurial Black) <br>
+Prod B = boAt Rugged v3 Extra Tough Unbreakable Braided Micro USB Cable 1.5 Meter (Black) <br>
+Prod C = boAt Deuce USB 300 2 in 1 Type-C & Micro USB Stress Resistant, Tangle-Free, Sturdy Cable with 3A Fast Charging & 480mbps Data Transmission, 10000+ Bends Lifespan and Extended 1.5m Length(Martian Red)<br>
+Prod D = TP-Link USB Bluetooth Adapter for PC, 5.0 Bluetooth Dongle Receiver (UB500) Supports Windows 11/10/8.1/7 for Desktop, Laptop, Mouse, Keyboard, Printers, Headsets, Speakers, PS4/ Xbox Controllers<br>
+Prod E = boAt Rockerz 400 Bluetooth On Ear Headphones With Mic With Upto 8 Hours Playback & Soft Padded Ear Cushions(Grey/Green)<br>
+Prod F = Sennheiser CX 80S in-Ear Wired Headphones with in-line One-Button Smart Remote with Microphone Black<br>
+
+The bar chart above displays the top products by rating count. This visualization helps in identifying which products are most popular among customers in terms of engagement, as reflected by the number of ratings received.
+
+
+
+### Pricing Trend Analysis<br
+<br>
+let's analyze pricing and discount data.Our analysis could include:<br>
+1. The distribution of actual and discounted prices.<br>
+2. The relationship between discount percentage and price.<br>
+3. How ratings impact pricing.<br>
+
+**1. The distribution of actual and discounted prices.**
+<br>
+I will plot the distribution of actual and discounted prices with histograms. This will give us an understanding of the range and common price points for these products
+
+
+```{r fig.width=10, fig.height=6}
+# Creating separate dataframes for actual and discounted prices with the same column names
+actual_prices <- df1 %>% select(Price = Actual_Price) %>% mutate(Price_Type = "Actual Price")
+discounted_prices <- df1 %>% select(Price = Discounted_Price) %>% mutate(Price_Type = "Discounted Price")
+
+# Combining the dataframes
+combined_prices <- rbind(actual_prices, discounted_prices)
+
+# Creating the histogram 
+
+ggplot(combined_prices, aes(x = Price, fill = Price_Type)) + 
+  geom_histogram(aes(y = ..count..), position = "identity", binwidth = 650) + # Adjust binwidth as needed
+  scale_fill_manual(values = c("Actual Price" = "skyblue", "Discounted Price" = "pink")) +
+  labs(title = "Distribution of Actual and Discounted Prices", 
+       x = "Price", 
+       y = "Frequency") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  xlim(c(0, 10000)) 
+
+
+```
+
+Above is the Histogram that shows the distribution of both actual and discounted prices for the products. **It indicates the typical price ranges and how they differ between the actual and discounted prices. The discounted prices are generally lower**, as expected.
+
+
+**2. Co-relation between actual price and discounted price**
+
+```{r fig.width=8, fig.height=6}
+
+library(ggplot2)
+library(corrplot)
+
+# Create the scatter plot of Actual Price vs Discounted Price with defined axis limits
+ggplot(df1, aes(x = Actual_Price, y = Discounted_Price)) +
+  geom_point(color = "brown") +
+  labs(x = 'Actual Price (Rupee India)', y = 'Discounted Price (Rupee India)', 
+       title = 'Correlation between Actual Price & Discounted Price') +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold")) +
+  xlim(0, 100000) + 
+  ylim(0, 100000)   
+```
+
+The scatter plot illustrates the relationship between the actual price and discounted price. There's a general trend that as the actual price increases, the discounted price also increases. This plot helps to visualize how discounts are applied across different price ranges.
+
+
+**3. Price and Discount Analysis**
+<br>
+Next, I will investigate the relationship between the discount percentage and the actual price of the products, overlaying the ratings, by using a scatter plot.
+
+```{r fig.width=10, fig.height=6}
+x_range <- c(0, 150000) 
+y_range <- c(0, max(df1$Discount_Percentage, na.rm = TRUE)) 
+
+# Creating the scatter plot with adjusted x and y axis limits
+ggplot(df1, aes(x = Actual_Price, y = Discount_Percentage, color = Rating)) + 
+  geom_point(alpha = 0.4) +  
+  scale_color_gradient(low = "blue", high = "red") +  
+  labs(title = 'Discount Percentage vs Actual Price (colored by Rating)',
+       x = 'Actual Price',
+       y = 'Discount Percentage') +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  xlim(x_range) +  
+  ylim(y_range)    
+```
+
+The scatter plot illustrates the relationship between the actual price of products, their discount percentage, and customer ratings. These are the observations:<br>
+
+1. The discount percentage varies across different price ranges.<br>
+2. There isn't a clear, consistent pattern indicating that higher discounts are always associated with higher or lower-priced items.<br>
+3. The color variation, representing the rating, does not show a clear trend in relation to the price and discount. This suggests that customer satisfaction (as measured by rating) is not strongly dependent on these factors.<br>
+
+
+### Customer Satisfaction Analysis
+
+```{r}
+# Set the size of the plotting area
+par(mfrow=c(1,1))
+par(mar=c(5,5,2,5))  
+
+selected_columns <- df1[, c("Rating", "Actual_Price", "Discounted_Price", "Discount_Percentage")]
+
+# Calculating the correlation matrix
+correlation_matrix <- cor(selected_columns, use="complete.obs")
+
+# Plotting the correlation matrix
+corrplot(correlation_matrix, method="color", type="upper", tl.col="black", tl.srt=45, 
+         cl.pos="n", addCoef.col="black", number.cex=0.8, tl.cex=0.65)
+
+title("Correlation Matrix for Rating, Price, and Discount")
+
+```
+
+The correlation matrix reveals a minimal impact of both actual and discounted prices on customer satisfaction, indicating that price is not a primary driver of happiness for customers. Despite a strong relationship between actual and discounted prices, suggesting proportional discounts, these factors don't significantly influence how customers rate their satisfaction. The data hints at a deeper story where satisfaction is less about the discount's depth and more about perceived quality and overall value. This suggests businesses should focus less on aggressive pricing strategies and more on the quality and service that underpin true customer satisfaction.
