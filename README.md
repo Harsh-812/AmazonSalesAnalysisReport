@@ -21,7 +21,7 @@ This project conducts a comprehensive exploration of an e-commerce dataset, with
 The initial phase of the project involves addressing inconsistencies, handling missing data, and standardizing the dataset. Particular attention is given to aspects like product pricing and customer ratings. This meticulous data preparation lays a strong foundation for accurate analysis. 
 <br>
 
-The cleaned dataset is in the file named **"Cleaned_Data"** and **"Review_Data"** in this repository
+The cleaned dataset is in the file named **"Cleaned_Data"** in this repository
 <hr>
 
 ### Data Analysis
