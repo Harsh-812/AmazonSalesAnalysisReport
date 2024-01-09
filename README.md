@@ -9,10 +9,12 @@ I've utilized the dataset sourced from Kaggle: [Dataset](https://www.kaggle.com/
 
 This project conducts a comprehensive exploration of an e-commerce dataset, with a specific focus on the "Computers & Accessories" category. The project encompasses multiple phases, including data cleaning, preparation, analysis, and visualization.
 
-### Tools and Technologies used
+### Tools
+<hr>
 Rstudio, Excel, R
 
-### R libraries utitlized
+### R libraries utitlized<hr>
+
 GGPLOT2, STRINGR, DPLYR, CORRPLOT
 
 ### Data Cleaning and Preparation
