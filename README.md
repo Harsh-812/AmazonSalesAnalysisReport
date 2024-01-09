@@ -4,6 +4,7 @@ This repository contains all the files associated with the project. You can find
 [Data Preprocessing and Exploration of Amazon Products using R](https://rpubs.com/Harsh_shekar12/1135302)<br>
 
 ### Resources
+<hr>
 I've utilized the dataset sourced from Kaggle: [Dataset](https://www.kaggle.com/datasets/karkavelrajaj/amazon-sales-dataset)
 
 This project conducts a comprehensive exploration of an e-commerce dataset, with a specific focus on the "Computers & Accessories" category. The project encompasses multiple phases, including data cleaning, preparation, analysis, and visualization.
