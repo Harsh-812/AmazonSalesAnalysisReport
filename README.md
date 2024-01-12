@@ -8,7 +8,7 @@ This repository contains all the files associated with the project. You can find
 I've utilized the dataset sourced from Kaggle: [Dataset](https://www.kaggle.com/datasets/karkavelrajaj/amazon-sales-dataset)
 <hr>
 
-This project conducts a comprehensive exploration of an e-commerce dataset, with a specific focus on the "Computers & Accessories" category. The project encompasses multiple phases, including data cleaning, preparation, analysis, and visualization.
+This project conducts a comprehensive exploration of an e-commerce dataset, with a focus on Exploratory Data Analysis. The project encompasses multiple phases, including data cleaning, preparation, analysis, and visualization.
 <hr>
 
 ### Tools : Rstudio, Excel, R
